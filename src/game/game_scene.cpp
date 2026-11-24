@@ -106,11 +106,9 @@ std::vector<std::string> Wrap(const std::string &text)
     return lines;
 }
 
-const Color GOLD_TEXT{1.0f, 0.86f, 0.35f, 1.0f};
-const Color SOFT_TEXT{0.75f, 0.8f, 0.95f, 1.0f};
 } // namespace
 
-GameScene::GameScene(Renderer2D *renderer_2d) : renderer(renderer_2d)
+GameScene::GameScene(Renderer2D *renderer_2d, GameUi *game_ui) : renderer(renderer_2d), ui(game_ui)
 {
     if (!LoadTileInfo(world.tileInfo))
     {
@@ -206,6 +204,14 @@ void GameScene::NewGame()
             "in Hearthwood. Elder Bram wants to see us in the village square!|Capo: Use the arrow "
             "keys to walk. Press X to talk to folks. Let's go!"
         );
+    }
+    if (std::getenv("SMALLCAP_ENDING"))
+    {
+        // Test hook: jump straight to the ending.
+        world.request = Request{};
+        phase = Phase::ENDING;
+        phaseTime = 0.0f;
+        PlayMusic(Music::ENDING);
     }
 }
 
@@ -657,123 +663,98 @@ void GameScene::Render()
     if (phase == Phase::ENDING)
     {
         RenderEnding();
+    }
+    else
+    {
+        RenderWorld(world, *renderer);
+    }
+    UpdateUi();
+}
+
+void GameScene::UpdateUi()
+{
+    if (!ui)
+    {
         return;
     }
-    RenderWorld(world, *renderer);
-    if (phase == Phase::TITLE)
-    {
-        RenderTitle();
-        return;
-    }
-    RenderHud(world, *renderer);
-    if (phase == Phase::DIALOG)
-    {
-        RenderDialog();
-    }
-    if (phase == Phase::PAUSE)
-    {
-        RenderPause();
-    }
-    if (phase == Phase::GAME_OVER)
-    {
-        RenderGameOver();
-    }
-}
+    UiState &state = ui->State();
+    state.screen = phase == Phase::TITLE ? "title" : (phase == Phase::ENDING ? "ending" : "play");
+    state.blink = static_cast<Int32>(phaseTime * 2.0f) % 2 == 0;
+    state.bob = static_cast<Int32>(std::lround(std::sin(phaseTime * 2.0f) * 2.0f));
 
-void GameScene::RenderDialog()
-{
-    Renderer2D &r = *renderer;
-    const Float box_y = world.player.y - world.cameraY > 100.0f ? 8.0f : 104.0f;
-    r.Box(8.0f, box_y, 224.0f, 48.0f);
-    const std::string &text = pages[page];
-    const auto shown = static_cast<size_t>(typed);
-    Float y = box_y + 7.0f;
-    size_t start = 0;
-    Bool first_line = true;
-    while (start <= text.size())
+    // HUD
+    const Player &p = world.player;
+    state.hearts.clear();
+    for (Int32 i = 0; i < p.maxHp / 2; ++i)
     {
-        size_t end = text.find('\n', start);
-        if (end == std::string::npos)
-        {
-            end = text.size();
-        }
-        if (start >= shown)
-        {
-            break;
-        }
-        std::string line = text.substr(start, std::min(end, shown) - start);
-        Float x = 16.0f;
-        // A leading "Name:" is drawn as the speaker in gold.
-        if (first_line)
-        {
-            const size_t colon = line.find(':');
-            const size_t full_colon = text.find(':');
-            if (colon != std::string::npos && colon < 12 && full_colon == colon &&
-                text.substr(0, colon).find(' ') == std::string::npos)
-            {
-                r.Text(line.substr(0, colon + 1), x, y, GOLD_TEXT);
-                x += Renderer2D::MeasureText(line.substr(0, colon + 1));
-                line = line.substr(colon + 1);
-            }
-        }
-        r.Text(line, x, y);
-        y += 12.0f;
-        first_line = false;
-        start = end + 1;
+        const Int32 value = p.hp - i * 2;
+        state.hearts.emplace_back(
+            value >= 2 ? "hud-heart-full" : (value == 1 ? "hud-heart-half" : "hud-heart-empty")
+        );
     }
-    if (shown >= text.size())
-    {
-        DrawOptions o;
-        o.screen = true;
-        r.Draw("arrow_" + std::to_string((world.tickCount / 15) % 2), 220.0f, box_y + 38.0f, o);
-    }
-}
+    char buffer[64];
+    std::snprintf(buffer, sizeof(buffer), "%03d", world.gems);
+    state.gems = buffer;
+    state.dungeon = world.map.rooms;
+    state.keys = world.keys;
+    state.bigKey = world.bigKey;
+    state.prompt = world.prompt.empty() ? std::string() : "X " + ToUiText(world.prompt);
 
-void GameScene::RenderTitle()
-{
-    Renderer2D &r = *renderer;
-    r.FillRect(0.0f, 0.0f, SCREEN_W, SCREEN_H, {0.05f, 0.04f, 0.12f, 0.55f});
-    DrawOptions o;
-    o.screen = true;
-    const Float bob = std::sin(phaseTime * 2.0f) * 2.0f;
-    r.Draw("capo_big", 120.0f, 92.0f + bob, o);
-    r.TextCentered("SMALL CAP", 121.0f, 15.0f, {0.2f, 0.1f, 0.05f, 1.0f}, 3.0f);
-    r.TextCentered("SMALL CAP", 120.0f, 14.0f, GOLD_TEXT, 3.0f);
-    r.TextCentered("Pip and the Sunstone", 120.0f, 44.0f, SOFT_TEXT);
-    if (static_cast<Int32>(phaseTime * 2.0f) % 2 == 0)
+    // Dialog: typed out character by character; a leading "Name:" is the speaker, in gold.
+    state.dialog = phase == Phase::DIALOG;
+    state.speaker.clear();
+    state.text.clear();
+    state.more = false;
+    if (state.dialog)
     {
-        r.TextCentered("Press Enter", 120.0f, 108.0f);
+        state.dialogTop = world.player.y - world.cameraY > 100.0f;
+        const std::string &text = pages[page];
+        const size_t shown = std::min(static_cast<size_t>(typed), text.size());
+        std::string visible = text.substr(0, shown);
+        const size_t colon = text.find(':');
+        const size_t first_break = text.find('\n');
+        if (colon != std::string::npos && colon < 12 && colon < first_break &&
+            text.substr(0, colon).find(' ') == std::string::npos)
+        {
+            const size_t speaker_length = std::min(colon + 1, visible.size());
+            state.speaker = visible.substr(0, speaker_length);
+            visible = visible.substr(speaker_length);
+        }
+        state.text = ToUiText(visible);
+        state.more = shown >= text.size();
+        state.arrowFrame = static_cast<Int32>((world.tickCount / 15) % 2);
     }
-    r.TextCentered("Arrows move  Z sword  X action", 120.0f, 130.0f, SOFT_TEXT);
-    r.TextCentered("C roll  Enter pause", 120.0f, 142.0f, SOFT_TEXT);
-}
 
-void GameScene::RenderPause()
-{
-    Renderer2D &r = *renderer;
-    r.FillRect(0.0f, 0.0f, SCREEN_W, SCREEN_H, {0.0f, 0.0f, 0.05f, 0.6f});
-    r.Box(40.0f, 24.0f, 160.0f, 112.0f);
-    r.TextCentered("PAUSED", 120.0f, 34.0f, GOLD_TEXT, 2.0f);
-    r.Text("Move     Arrows/WASD", 52.0f, 60.0f);
-    r.Text("Sword    Z / J", 52.0f, 72.0f);
-    r.Text("Spin     hold Z", 52.0f, 84.0f);
-    r.Text("Action   X / K", 52.0f, 96.0f);
-    r.Text("Roll     C / Shift", 52.0f, 108.0f);
-    char buffer[48];
+    state.paused = phase == Phase::PAUSE;
+    state.controlsText = "Move     Arrows/WASD\nSword    Z / J\nSpin     hold Z\n"
+                         "Action   X / K\nRoll     C / Shift";
     const auto seconds = static_cast<Int32>(playTime);
     std::snprintf(buffer, sizeof(buffer), "Time %d:%02d", seconds / 60, seconds % 60);
-    r.TextCentered(buffer, 120.0f, 122.0f, SOFT_TEXT);
-}
+    state.time = buffer;
 
-void GameScene::RenderGameOver()
-{
-    Renderer2D &r = *renderer;
-    r.FillRect(0.0f, 50.0f, SCREEN_W, 56.0f, {0.0f, 0.0f, 0.0f, 0.75f});
-    r.TextCentered("You fainted...", 120.0f, 62.0f, {1.0f, 0.5f, 0.5f, 1.0f}, 2.0f);
-    if (phaseTime > 1.2f)
+    state.gameOver = phase == Phase::GAME_OVER;
+    state.retry = phaseTime > 1.2f;
+
+    // Ending: the lines appear one by one, then the stats.
+    state.endingLines = 0;
+    state.stats.clear();
+    if (phase == Phase::ENDING)
     {
-        r.TextCentered("Press Enter to try again", 120.0f, 88.0f);
+        for (Int32 i = 0; i < 6; ++i)
+        {
+            if (phaseTime > 0.8f + static_cast<Float>(i) * 0.7f)
+            {
+                state.endingLines = i + 1;
+            }
+        }
+        if (phaseTime > 6.0f)
+        {
+            std::snprintf(buffer, sizeof(buffer), "Time %d:%02d   Gems %d", seconds / 60,
+                          seconds % 60, world.gems);
+            state.stats = buffer;
+        }
     }
+    ui->Commit();
 }
 
 void GameScene::RenderEnding()
@@ -793,31 +774,5 @@ void GameScene::RenderEnding()
     r.Draw("sunstone_" + std::to_string((world.tickCount / 12) % 2), 120.0f, 64.0f, o);
     r.Draw("capo_small", 106.0f, 84.0f + std::sin(t * 3.0f) * 1.5f, o);
     r.Draw("hero_down_0", 126.0f, 86.0f, o);
-    const char *lines[] = {
-        "The Sunstone shines again!",
-        "Its light spread through the roots,",
-        "and the monsters fled the Rootwood.",
-        "",
-        "Thanks for playing SMALL CAP!",
-        "To be continued...",
-    };
-    Float y = 96.0f;
-    for (Int32 i = 0; i < 6; ++i)
-    {
-        if (t > 0.8f + static_cast<Float>(i) * 0.7f)
-        {
-            r.TextCentered(lines[i], 120.0f, y, i >= 4 ? GOLD_TEXT : Color{});
-        }
-        y += 10.0f;
-    }
-    r.TextCentered("SMALL CAP", 120.0f, 8.0f, GOLD_TEXT, 2.0f);
-    if (t > 6.0f)
-    {
-        char buffer[64];
-        const auto seconds = static_cast<Int32>(playTime);
-        std::snprintf(buffer, sizeof(buffer), "Time %d:%02d   Gems %d", seconds / 60, seconds % 60,
-                      world.gems);
-        r.TextCentered(buffer, 120.0f, 28.0f, SOFT_TEXT);
-    }
 }
 } // namespace smallcap

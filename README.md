@@ -45,6 +45,12 @@ make assets        # regenerates textures, maps, sounds and music
 The maps in `resources/maps` are regular Tiled JSON files (tileset `resources/textures/tiles.tsj`),
 so they can be opened in Tiled; `make assets` regenerates them from `tools/make_maps.py`.
 
+The title screen, HUD, dialog boxes, pause and ending are drawn with the engine's RmlUi UI backend: `resources/ui/game.rml` and
+`game.rcss` lay them out on the 240x160 screen (1dp = one game pixel) and the game fills in a
+data model every frame (`src/ui/game_ui.cpp`). `tools/make_ui.py` builds the pixel font
+(`resources/ui/pixel.ttf`) and the sprite sheet declarations (`sprites.rcss`) from the same
+font and atlas as the game art.
+
 ### Test hooks
 
 Environment variables for jumping around while developing:
@@ -55,5 +61,6 @@ Environment variables for jumping around while developing:
 - `SMALLCAP_SWORD=1`: starts with the sword
 - `SMALLCAP_FLAGS=a,b`: sets story flags
 - `SMALLCAP_PEACE=1`: removes regular enemies
+- `SMALLCAP_ENDING=1`: jumps straight to the ending
 - `SMALLCAP_INPUT="right:60 sword:1 wait:30"`: scripted input
 - `SMALLCAP_SHOTS=120,300`: saves screenshots at those ticks, then quits

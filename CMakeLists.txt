@@ -31,10 +31,20 @@ set(OS_ENABLED ON CACHE BOOL "Enable feature" FORCE)
 # game has no use for it.
 set(IMGUI_ENABLED OFF CACHE BOOL "Enable feature" FORCE)
 set(IMGUI_EXTENSION_ENABLED OFF CACHE BOOL "Enable feature" FORCE)
+# Menus, dialog boxes and the HUD are RmlUi documents (resources/ui).
+set(UI_ENABLED ON CACHE BOOL "Enable feature" FORCE)
+set(UI_BACKEND rmlui CACHE STRING "Set backend" FORCE)
 
 add_subdirectory(evogine/src engine_build)
 
 target_link_libraries(small-cap PRIVATE evogine)
+# RmlUi reads the UI documents straight from the file system: the preloaded /game mount on the
+# web, the source tree natively.
+if(EMSCRIPTEN)
+    target_compile_definitions(small-cap PRIVATE RESOURCE_UI_DIR="/game/ui")
+else()
+    target_compile_definitions(small-cap PRIVATE RESOURCE_UI_DIR="${CMAKE_CURRENT_LIST_DIR}/resources/ui")
+endif()
 ADD_RESOURCE_PATH("game,${CMAKE_CURRENT_LIST_DIR}/resources")
 GENERATE_RESOURCE_HEADER()
 generate_components()

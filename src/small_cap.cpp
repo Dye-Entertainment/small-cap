@@ -12,8 +12,13 @@ Bool SmallCap::DerrivedInitialize()
         LOGERROR("Small Cap could not load its graphics");
         return false;
     }
+    if (!ui.Initialize())
+    {
+        LOGERROR("Small Cap could not load its UI");
+        return false;
+    }
     smallcap::InitializeAudio();
-    core::SceneManager::GetInstance()->AddScene("Small Cap", new smallcap::GameScene(&renderer));
+    core::SceneManager::GetInstance()->AddScene("Small Cap", new smallcap::GameScene(&renderer, &ui));
     return true;
 }
 
@@ -25,6 +30,7 @@ Bool SmallCap::UpdateLoop(const Double)
 void SmallCap::Destroy()
 {
     smallcap::ShutdownAudio();
+    ui.Shutdown();
     renderer.Shutdown();
     GameApplication::Destroy();
 }

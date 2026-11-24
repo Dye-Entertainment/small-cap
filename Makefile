@@ -25,6 +25,7 @@ assets:
 	python3 tools/make_art.py resources/textures
 	python3 tools/make_maps.py resources/maps
 	python3 tools/make_audio.py resources
+	python3 tools/make_ui.py resources
 
 linux: evogen
 	cmake -S . -G Ninja -B build-linux --toolchain=$(LINUX_TOOLCHAIN) -DCMAKE_BUILD_TYPE=$(CONFIGURATION)

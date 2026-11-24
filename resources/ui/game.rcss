@@ -1,0 +1,71 @@
+/* Small Cap UI. Everything is laid out on the 240x160 game screen: 1dp is one game pixel. */
+/* RmlUi has no default style sheet. */
+div, p { display: block; }
+body
+{
+    width: 240dp;
+    height: 160dp;
+    font-family: Pixel;
+    font-size: 10dp;
+    line-height: 12dp;
+    color: #ffffff;
+    font-effect: shadow(1dp 1dp #28243c);
+    pointer-events: none;
+}
+.gold { color: #ffdb59; }
+.soft { color: #bfccf2; }
+.center { position: absolute; left: 0; width: 240dp; text-align: center; }
+.screen { position: absolute; left: 0; top: 0; width: 240dp; height: 160dp; }
+.box
+{
+    decorator: tiled-box(box-tl, box-t, box-tr, box-l, box-m, box-r, box-bl, box-b, box-br);
+}
+
+/* Title */
+#title { background-color: #0d0a1f8c; }
+#title .logo { top: 14dp; font-size: 30dp; line-height: 30dp; color: #ffdb59;
+               font-effect: shadow(1dp 1dp #33190d); }
+#title .subtitle { top: 44dp; }
+#title .capo { position: absolute; left: 96dp; top: 53dp; }
+#title .start { top: 108dp; }
+#title .help { top: 130dp; white-space: pre; }
+
+/* HUD */
+#hearts { position: absolute; left: 3dp; top: 3dp; }
+#hearts span { display: inline-block; width: 8dp; }
+#gems { position: absolute; left: 210dp; top: 3dp; }
+#gems img, #keys img { position: absolute; left: 0; top: 0; }
+#gems span { position: absolute; left: 9dp; top: 0; }
+#keys { position: absolute; left: 196dp; top: 14dp; width: 40dp; }
+#keys .key { left: 15dp; }
+#keys span { position: absolute; left: 23dp; top: 1dp; }
+#prompt { position: absolute; top: 2dp; left: 0; width: 240dp; text-align: center; }
+#prompt span { display: inline-block; padding: 0 4dp; height: 11dp; line-height: 11dp;
+               background-color: #14143db3; color: #fff299; }
+#prompt span .button { color: #fff299; }
+
+/* Dialog */
+#dialog { position: absolute; left: 8dp; width: 224dp; height: 48dp; }
+#dialog.bottom { top: 104dp; }
+#dialog.top { top: 8dp; }
+#dialog .text { position: absolute; left: 8dp; top: 7dp; width: 212dp; white-space: pre; }
+#dialog .arrow { position: absolute; left: 212dp; top: 38dp; }
+
+/* Pause */
+#pause { background-color: #00000d99; }
+#pause .panel { position: absolute; left: 40dp; top: 24dp; width: 160dp; height: 112dp; }
+#pause .heading { top: 10dp; width: 160dp; font-size: 20dp; line-height: 20dp; color: #ffdb59; }
+#pause .rows { position: absolute; left: 12dp; top: 36dp; white-space: pre; }
+#pause .time { top: 98dp; width: 160dp; }
+
+/* Game over */
+#gameover { position: absolute; left: 0; top: 50dp; width: 240dp; height: 56dp;
+            background-color: #000000bf; }
+#gameover .heading { top: 12dp; font-size: 20dp; line-height: 20dp; color: #ff8080; }
+#gameover .retry { top: 38dp; }
+
+/* Ending */
+#ending .heading { top: 8dp; font-size: 20dp; line-height: 20dp; color: #ffdb59; }
+#ending .stats { top: 28dp; }
+#ending .lines { position: absolute; left: 0; top: 96dp; width: 240dp; text-align: center; line-height: 10dp; }
+#ending .lines div { height: 10dp; }

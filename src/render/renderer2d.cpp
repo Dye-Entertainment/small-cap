@@ -113,10 +113,6 @@ Bool Renderer2D::Initialize()
         sprites.push_back(sprite);
     }
 
-    for (Int32 c = 0; c < 128; ++c)
-    {
-        glyphs[c] = Find("font_" + std::to_string(c));
-    }
     white = Find("white");
     LOGINFO("Loaded %zu sprites", sprites.size());
     return white != NO_SPRITE;
@@ -318,72 +314,5 @@ void Renderer2D::FillRect(
     graphics::Renderer::GetInstance()->SubmitOpaqueMesh(
         sprite.mesh, GetMaterial(false, color, 0.0f), transform
     );
-}
-
-Float Renderer2D::MeasureText(const std::string_view text, const Float scale)
-{
-    return static_cast<Float>(text.size()) * 6.0f * scale;
-}
-
-void Renderer2D::Text(
-    const std::string_view text, const Float x, const Float y, const Color &color, const Float scale
-)
-{
-    DrawOptions options;
-    options.tint = color;
-    options.scale = scale;
-    options.screen = true;
-    Float cursor = x;
-    for (const char raw : text)
-    {
-        const auto index = static_cast<UInt8>(raw);
-        if (index < 128 && raw != ' ' && glyphs[index] != NO_SPRITE)
-        {
-            Draw(glyphs[index], cursor, y, options);
-        }
-        cursor += 6.0f * scale;
-    }
-}
-
-void Renderer2D::TextCentered(
-    const std::string_view text, const Float center_x, const Float y, const Color &color,
-    const Float scale
-)
-{
-    Text(text, std::floor(center_x - MeasureText(text, scale) * 0.5f), y, color, scale);
-}
-
-void Renderer2D::Box(const Float x, const Float y, const Float w, const Float h)
-{
-    // 9-slice box from 8x8 pieces; w and h should be multiples of 8.
-    DrawOptions options;
-    options.screen = true;
-    const Int32 cols = static_cast<Int32>(w / 8.0f);
-    const Int32 rows = static_cast<Int32>(h / 8.0f);
-    static const char *names[9] = {"box_tl", "box_t", "box_tr", "box_l", "box_m",
-                                   "box_r",  "box_bl", "box_b", "box_br"};
-    SpriteId ids[9];
-    for (Int32 i = 0; i < 9; ++i)
-    {
-        ids[i] = Find(names[i]);
-    }
-    for (Int32 r = 0; r < rows; ++r)
-    {
-        const Int32 row = r == 0 ? 0 : (r == rows - 1 ? 2 : 1);
-        for (Int32 c = 0; c < cols; ++c)
-        {
-            const Int32 col = c == 0 ? 0 : (c == cols - 1 ? 2 : 1);
-            if (row == 1 && col == 1)
-            {
-                continue;
-            }
-            Draw(ids[row * 3 + col], x + c * 8.0f, y + r * 8.0f, options);
-        }
-    }
-    // Fill the middle with one stretched quad instead of many tiles.
-    if (cols > 2 && rows > 2)
-    {
-        FillRect(x + 8.0f, y + 8.0f, (cols - 2) * 8.0f, (rows - 2) * 8.0f, {0.141f, 0.157f, 0.345f, 1.0f});
-    }
 }
 } // namespace smallcap

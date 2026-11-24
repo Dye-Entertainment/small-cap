@@ -516,38 +516,4 @@ void RenderWorld(World &world, Renderer2D &r)
     }
 }
 
-void RenderHud(const World &world, Renderer2D &r)
-{
-    DrawOptions screen;
-    screen.screen = true;
-    const Player &p = world.player;
-    const Int32 hearts = p.maxHp / 2;
-    for (Int32 i = 0; i < hearts; ++i)
-    {
-        const Int32 value = p.hp - i * 2;
-        const char *name = value >= 2 ? "hud_heart_full" : (value == 1 ? "hud_heart_half" : "hud_heart_empty");
-        r.Draw(name, 3.0f + static_cast<Float>(i) * 8.0f, 3.0f, screen);
-    }
-    char buffer[16];
-    std::snprintf(buffer, sizeof(buffer), "%03d", world.gems);
-    r.Draw("hud_gem", 210.0f, 3.0f, screen);
-    r.Text(buffer, 219.0f, 3.0f);
-    if (world.map.rooms)
-    {
-        r.Draw("hud_key", 211.0f, 14.0f, screen);
-        std::snprintf(buffer, sizeof(buffer), "x%d", world.keys);
-        r.Text(buffer, 219.0f, 15.0f);
-        if (world.bigKey)
-        {
-            r.Draw("hud_bigkey", 196.0f, 14.0f, screen);
-        }
-    }
-    if (!world.prompt.empty())
-    {
-        const std::string text = "X " + world.prompt;
-        const Float w = Renderer2D::MeasureText(text) + 8.0f;
-        r.FillRect(120.0f - w * 0.5f, 2.0f, w, 11.0f, {0.08f, 0.08f, 0.2f, 0.7f});
-        r.TextCentered(text, 120.0f, 3.0f, {1.0f, 0.95f, 0.6f, 1.0f});
-    }
-}
 } // namespace smallcap

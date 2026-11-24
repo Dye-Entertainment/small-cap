@@ -3,6 +3,7 @@
 #include "game/world.h"
 #include "input/controls.h"
 #include "render/renderer2d.h"
+#include "ui/game_ui.h"
 #include "resource/raw_texture.h"
 
 #include "compiled/warning_off.h"
@@ -31,7 +32,7 @@ enum class Phase : UInt8
 class GameScene final : public core::Scene
 {
   public:
-    explicit GameScene(Renderer2D *renderer);
+    GameScene(Renderer2D *renderer, GameUi *ui);
     void Update(const double elapsed_seconds) override;
     void Render() override;
 
@@ -45,13 +46,13 @@ class GameScene final : public core::Scene
     void StartItemGet(const std::string &item);
     void StartWarp(const std::string &map, const std::string &spawn);
     void UpdateMusic();
-    void RenderDialog();
-    void RenderTitle();
+    // Fills in the UI document's state from the game.
+    void UpdateUi();
+    // The ending's sparkles and characters; its text is in the UI document.
     void RenderEnding();
-    void RenderPause();
-    void RenderGameOver();
 
     Renderer2D *renderer = nullptr;
+    GameUi *ui = nullptr;
     World world;
     Controls controls;
     Phase phase = Phase::TITLE;

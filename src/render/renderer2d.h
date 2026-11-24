@@ -91,12 +91,6 @@ class Renderer2D final
     void DrawTileLayer(const TileLayerMesh &layer, Int32 frame);
 
     void FillRect(Float x, Float y, Float w, Float h, const Color &color, Bool screen = true);
-    void Text(std::string_view text, Float x, Float y, const Color &color = {}, Float scale = 1.0f);
-    void TextCentered(
-        std::string_view text, Float center_x, Float y, const Color &color = {}, Float scale = 1.0f
-    );
-    static Float MeasureText(std::string_view text, Float scale = 1.0f);
-    void Box(Float x, Float y, Float w, Float h);
 
   private:
     resource::Material *GetMaterial(Bool tiles, const Color &tint, Float flash);
@@ -107,7 +101,6 @@ class Renderer2D final
     std::vector<Sprite> sprites;
     std::unordered_map<std::string, SpriteId> spriteByName;
     std::unordered_map<UInt64, resource::Material *> materials;
-    SpriteId glyphs[128]{};
     SpriteId white = NO_SPRITE;
     Int32 tileColumns = 16;
     Float tileImageWidth = 256.0f;

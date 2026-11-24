@@ -223,7 +223,6 @@ void UpdateEnemy(World &world, Entity &e);
 
 // render_world.cpp
 void RenderWorld(World &world, Renderer2D &renderer);
-void RenderHud(const World &world, Renderer2D &renderer);
 
 inline Float DirX(const Dir d)
 {

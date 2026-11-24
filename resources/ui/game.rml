@@ -1,0 +1,61 @@
+<rml>
+<head>
+    <title>Small Cap</title>
+    <link type="text/rcss" href="sprites.rcss"/>
+    <link type="text/rcss" href="game.rcss"/>
+</head>
+<body data-model="game">
+    <!-- Title screen -->
+    <div id="title" class="screen" data-if="screen == 'title'">
+        <div class="center logo">SMALL CAP</div>
+        <div class="center subtitle soft">Pip and the Sunstone</div>
+        <img class="capo" sprite="capo-big" data-style-top="(53 + bob) + 'dp'"/>
+        <div class="center start" data-visible="blink">{{ startText }}</div>
+        <div class="center help soft">{{ helpLine1 }}<br/>{{ helpLine2 }}</div>
+    </div>
+
+    <!-- HUD -->
+    <div class="screen" data-if="screen == 'play'">
+        <div id="hearts"><span data-for="heart : hearts"><img data-attr-sprite="heart"/></span></div>
+        <div id="gems"><img sprite="hud-gem"/><span>{{ gems }}</span></div>
+        <div id="keys" data-if="dungeon">
+            <img sprite="hud-bigkey" data-if="bigKey"/>
+            <img class="key" sprite="hud-key"/>
+            <span>x{{ keys }}</span>
+        </div>
+        <div id="prompt" data-if="prompt != ''"><span>{{ prompt }}</span></div>
+
+        <div id="dialog" class="box" data-if="dialog" data-class-top="dialogTop" data-class-bottom="!dialogTop">
+            <div class="text"><span class="gold">{{ speaker }}</span>{{ text }}</div>
+            <img class="arrow" data-if="more" data-attr-sprite="'arrow-' + arrowFrame"/>
+        </div>
+
+        <div id="pause" class="screen" data-if="paused">
+            <div class="panel box">
+                <div class="center heading">PAUSED</div>
+                <div class="rows">{{ controlsText }}</div>
+                <div class="center time soft">{{ time }}</div>
+            </div>
+        </div>
+
+        <div id="gameover" data-if="gameOver">
+            <div class="center heading">You fainted...</div>
+            <div class="center retry" data-if="retry">{{ retryText }}</div>
+        </div>
+    </div>
+
+    <!-- Ending -->
+    <div id="ending" class="screen" data-if="screen == 'ending'">
+        <div class="center heading">SMALL CAP</div>
+        <div class="center stats soft" data-if="stats != ''">{{ stats }}</div>
+        <div class="lines">
+            <div data-visible="endingLines > 0">The Sunstone shines again!</div>
+            <div data-visible="endingLines > 1">Its light spread through the roots,</div>
+            <div data-visible="endingLines > 2">and the monsters fled the Rootwood.</div>
+            <div data-visible="endingLines > 3"></div>
+            <div class="gold" data-visible="endingLines > 4">Thanks for playing SMALL CAP!</div>
+            <div class="gold" data-visible="endingLines > 5">To be continued...</div>
+        </div>
+    </div>
+</body>
+</rml>
