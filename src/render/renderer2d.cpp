@@ -19,7 +19,9 @@ namespace smallcap
 namespace
 {
 constexpr Float DEPTH_FAR = 9.5f;
-constexpr Float DEPTH_STEP = 0.00015f;
+// Wide enough that consecutive draws stay distinct even with a 16-bit depth buffer, which
+// many phone GPUs use (about 15k draws per frame).
+constexpr Float DEPTH_STEP = 0.0006f;
 
 const VertexLayout &QuadLayout()
 {
