@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Small Cap</title>
 <style>
   :root {
@@ -105,6 +105,120 @@
     cursor: pointer;
   }
   #play:hover { background: rgba(248, 208, 64, 0.12); }
+
+  /* ---- Touch controls (phones and tablets) ---- */
+  #touch {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body.touch #touch { display: block; }
+  body.touch #controls { display: none; }
+  body.touch #stage {
+    inset: 0;
+    padding-top: env(safe-area-inset-top);
+  }
+  body.touch #canvas {
+    width: min(100vw, calc(100vh * 3 / 2)) !important;
+    height: min(100vh, calc(100vw * 2 / 3)) !important;
+    width: min(100vw, calc(100dvh * 3 / 2)) !important;
+    height: min(100dvh, calc(100vw * 2 / 3)) !important;
+  }
+  /* Portrait: the game sits at the top and the controls fill the space below it. */
+  @media (orientation: portrait) {
+    body.touch #stage { align-items: flex-start; }
+    body.touch #start { bottom: calc(176px + env(safe-area-inset-bottom)); }
+  }
+  #dpad, #buttons, #start {
+    position: absolute;
+    pointer-events: auto;
+    touch-action: none;
+  }
+  #dpad {
+    left: calc(14px + env(safe-area-inset-left));
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.07);
+    border: 2px solid rgba(255, 255, 255, 0.18);
+  }
+  #dpad .arm {
+    position: absolute;
+    width: 46px;
+    height: 46px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.16);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.05s;
+  }
+  #dpad .arm.on { background: rgba(248, 208, 64, 0.55); color: #fff; }
+  #dpad .up { left: 52px; top: 6px; }
+  #dpad .down { left: 52px; bottom: 6px; }
+  #dpad .left { left: 6px; top: 52px; }
+  #dpad .right { right: 6px; top: 52px; }
+  #buttons {
+    right: calc(14px + env(safe-area-inset-right));
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    width: 156px;
+    height: 150px;
+  }
+  .touch-btn {
+    position: absolute;
+    left: calc(var(--x) * 50px);
+    top: calc(var(--y) * 46px - 2px);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14);
+    border: 2px solid rgba(255, 255, 255, 0.28);
+    color: #fff;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    touch-action: none;
+  }
+  .touch-btn small {
+    font-size: 9px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 2px;
+  }
+  .touch-btn.on { background: rgba(248, 208, 64, 0.55); border-color: var(--accent); }
+  #start {
+    left: 50%;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    padding: 8px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+  #start.on { background: rgba(248, 208, 64, 0.55); }
+  /* Landscape phones: keep the start button off the game picture. */
+  @media (orientation: landscape) {
+    #start { left: auto; transform: none; right: calc(14px + env(safe-area-inset-right)); bottom: auto;
+             top: calc(10px + env(safe-area-inset-top)); }
+  }
 </style>
 </head>
 <body>
@@ -122,6 +236,21 @@
   <div id="bar"><div></div></div>
   <button id="play">Click to play</button>
   <p>An original tiny adventure built on the evogine engine.</p>
+</div>
+
+<div id="touch" aria-hidden="true">
+  <div id="dpad">
+    <div class="arm up">&#9650;</div>
+    <div class="arm down">&#9660;</div>
+    <div class="arm left">&#9664;</div>
+    <div class="arm right">&#9654;</div>
+  </div>
+  <div id="buttons">
+    <div class="touch-btn" data-code="KeyC" data-key="c" style="--x:0;--y:1">C<small>roll</small></div>
+    <div class="touch-btn" data-code="KeyZ" data-key="z" style="--x:1;--y:2">A<small>sword</small></div>
+    <div class="touch-btn" data-code="KeyX" data-key="x" style="--x:2;--y:1">B<small>talk</small></div>
+  </div>
+  <div id="start" class="touch-key" data-code="Enter" data-key="Enter">START</div>
 </div>
 
 <script>
@@ -183,6 +312,194 @@
       statusText.textContent = 'The game crashed: ' + what + '. Reload the page to try again.';
     }
   };
+</script>
+<script>
+  // On-screen controls for touch screens. They send the same key events as the keyboard, so the
+  // game sees arrow keys, Z, X, C and Enter. ?touch=1 forces them on, ?touch=0 turns them off.
+  (function () {
+    var forced = /[?&]touch=([01])/.exec(window.location.search);
+    var body = document.body;
+    function enableTouch() {
+      if (!body.classList.contains('touch')) {
+        body.classList.add('touch');
+        playButton.textContent = 'Tap to play';
+      }
+    }
+    if (forced ? forced[1] === '1' : window.matchMedia('(pointer: coarse)').matches) {
+      enableTouch();
+    }
+    if (!forced) {
+      window.addEventListener('touchstart', enableTouch, { passive: true, once: true });
+    }
+
+    // The game reads the keyboard once per frame, so a quick tap is held down for at least
+    // MIN_HOLD_MS; otherwise it could go down and up between two frames and be missed.
+    var MIN_HOLD_MS = 90;
+    var held = {};
+    var pressedAt = {};
+    var pendingRelease = {};
+    function send(code, key, down) {
+      window.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', {
+        code: code, key: key, bubbles: true, cancelable: true
+      }));
+    }
+    function setKey(code, key, down) {
+      if (down) {
+        if (pendingRelease[code]) {
+          clearTimeout(pendingRelease[code]);
+          delete pendingRelease[code];
+          return;
+        }
+        if (held[code]) {
+          return;
+        }
+        held[code] = true;
+        pressedAt[code] = performance.now();
+        send(code, key, true);
+        if (navigator.vibrate) {
+          navigator.vibrate(8);
+        }
+        return;
+      }
+      if (!held[code] || pendingRelease[code]) {
+        return;
+      }
+      var wait = MIN_HOLD_MS - (performance.now() - pressedAt[code]);
+      function release() {
+        delete pendingRelease[code];
+        held[code] = false;
+        send(code, key, false);
+      }
+      if (wait > 0) {
+        pendingRelease[code] = setTimeout(release, wait);
+      } else {
+        release();
+      }
+    }
+
+    // Buttons: held while a finger is on them.
+    var buttons = document.querySelectorAll('#touch .touch-btn, #touch .touch-key');
+    Array.prototype.forEach.call(buttons, function (el) {
+      var code = el.getAttribute('data-code');
+      var key = el.getAttribute('data-key');
+      var pointers = {};
+      function update() {
+        var down = Object.keys(pointers).length > 0;
+        el.classList.toggle('on', down);
+        setKey(code, key, down);
+      }
+      el.addEventListener('pointerdown', function (e) {
+        e.preventDefault();
+        el.setPointerCapture(e.pointerId);
+        pointers[e.pointerId] = true;
+        update();
+      });
+      function end(e) {
+        delete pointers[e.pointerId];
+        update();
+      }
+      el.addEventListener('pointerup', end);
+      el.addEventListener('pointercancel', end);
+      el.addEventListener('lostpointercapture', end);
+    });
+
+    // D-pad: the direction comes from where the finger is relative to the center, so sliding
+    // the thumb around changes direction without lifting it.
+    var dpad = document.getElementById('dpad');
+    var diagonals = true;
+    var arms = {
+      ArrowUp: dpad.querySelector('.up'), ArrowDown: dpad.querySelector('.down'),
+      ArrowLeft: dpad.querySelector('.left'), ArrowRight: dpad.querySelector('.right')
+    };
+    var dpadPointer = null;
+    function setDirections(dirs) {
+      Object.keys(arms).forEach(function (code) {
+        var on = dirs.indexOf(code) >= 0;
+        arms[code].classList.toggle('on', on);
+        setKey(code, code, on);
+      });
+    }
+    function dpadMove(e) {
+      var rect = dpad.getBoundingClientRect();
+      var dx = e.clientX - (rect.left + rect.width / 2);
+      var dy = e.clientY - (rect.top + rect.height / 2);
+      if (dx * dx + dy * dy < 14 * 14) {
+        setDirections([]);
+        return;
+      }
+      var angle = Math.atan2(dy, dx) * 180 / Math.PI; // 0 = right, 90 = down
+      var dirs = [];
+      if (diagonals) {
+        var sector = Math.round(angle / 45);
+        var table = {
+          0: ['ArrowRight'], 1: ['ArrowRight', 'ArrowDown'], 2: ['ArrowDown'], 3: ['ArrowLeft', 'ArrowDown'],
+          4: ['ArrowLeft'], '-4': ['ArrowLeft'], '-3': ['ArrowLeft', 'ArrowUp'], '-2': ['ArrowUp'],
+          '-1': ['ArrowRight', 'ArrowUp']
+        };
+        dirs = table[sector];
+      } else if (Math.abs(dx) > Math.abs(dy)) {
+        dirs = [dx > 0 ? 'ArrowRight' : 'ArrowLeft'];
+      } else {
+        dirs = [dy > 0 ? 'ArrowDown' : 'ArrowUp'];
+      }
+      setDirections(dirs);
+    }
+    dpad.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      dpad.setPointerCapture(e.pointerId);
+      dpadPointer = e.pointerId;
+      dpadMove(e);
+    });
+    dpad.addEventListener('pointermove', function (e) {
+      if (e.pointerId === dpadPointer) {
+        dpadMove(e);
+      }
+    });
+    function dpadEnd(e) {
+      if (e.pointerId === dpadPointer) {
+        dpadPointer = null;
+        setDirections([]);
+      }
+    }
+    dpad.addEventListener('pointerup', dpadEnd);
+    dpad.addEventListener('pointercancel', dpadEnd);
+    dpad.addEventListener('lostpointercapture', dpadEnd);
+
+    // Let go of everything when the page is hidden, so no key stays stuck down.
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        dpadPointer = null;
+        setDirections([]);
+        Object.keys(held).forEach(function (code) { setKey(code, code, false); });
+        Array.prototype.forEach.call(buttons, function (el) { el.classList.remove('on'); });
+      }
+    });
+
+    // No pinch zoom, double-tap zoom or long-press menus while playing.
+    document.addEventListener('touchmove', function (e) {
+      if (e.touches.length > 1) { e.preventDefault(); }
+    }, { passive: false });
+    document.addEventListener('dblclick', function (e) { e.preventDefault(); });
+    document.addEventListener('contextmenu', function (e) {
+      if (body.classList.contains('touch')) { e.preventDefault(); }
+    });
+
+    // Go fullscreen on phones that allow it (not iPhone Safari) when the game starts.
+    playButton.addEventListener('click', function () {
+      if (!body.classList.contains('touch')) {
+        return;
+      }
+      var root = document.documentElement;
+      var request = root.requestFullscreen || root.webkitRequestFullscreen;
+      if (request) {
+        try {
+          var result = request.call(root, { navigationUI: 'hide' });
+          if (result && result.catch) { result.catch(function () {}); }
+        } catch (err) {
+        }
+      }
+    });
+  })();
 </script>
 {{{ SCRIPT }}}
 </body>
